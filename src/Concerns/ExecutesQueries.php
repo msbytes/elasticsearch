@@ -290,7 +290,11 @@ trait ExecutesQueries
         }
 
         $parameters = [
-            'body' => $attributes,
+            'body' => array_diff_key($attributes, array_flip([
+                self::FIELD_ID,
+                self::FIELD_TYPE,
+                self::FIELD_INDEX,
+            ])),
             'client' => ['ignore' => $this->getIgnores()],
         ];
 
