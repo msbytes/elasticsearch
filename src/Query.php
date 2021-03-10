@@ -121,13 +121,13 @@ class Query implements Arrayable, JsonSerializable, Jsonable, IteratorAggregate
 
     public const PARAM_TYPE = 'type';
 
-    public const SOURCE_EXCLUDE = 'exclude';
+    public const SOURCE_EXCLUDES = 'excludes';
 
-    public const SOURCE_INCLUDE = 'include';
+    public const SOURCE_INCLUDES = 'includes';
 
     protected static $defaultSource = [
-        'include' => [],
-        'exclude' => [],
+        self::SOURCE_INCLUDES => [],
+        self::SOURCE_EXCLUDES => [],
     ];
 
     /**

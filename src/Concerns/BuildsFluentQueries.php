@@ -443,16 +443,16 @@ trait BuildsFluentQueries
     {
         $fields = $this->flattenArgs($args);
 
-        $this->source[Query::SOURCE_EXCLUDE] = array_unique(array_merge(
-            $this->source[Query::SOURCE_EXCLUDE] ?? [],
+        $this->source[Query::SOURCE_EXCLUDES] = array_unique(array_merge(
+            $this->source[Query::SOURCE_EXCLUDES] ?? [],
             $fields
         ));
 
-        $this->source[Query::SOURCE_INCLUDE] = array_values(array_filter(
-            $this->source[Query::SOURCE_INCLUDE], function ($field) {
+        $this->source[Query::SOURCE_INCLUDES] = array_values(array_filter(
+            $this->source[Query::SOURCE_INCLUDES], function ($field) {
             return ! in_array(
                 $field,
-                $this->source[Query::SOURCE_EXCLUDE] ?? [],
+                $this->source[Query::SOURCE_EXCLUDES] ?? [],
                 false
             );
         }));
