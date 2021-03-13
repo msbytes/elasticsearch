@@ -250,14 +250,14 @@ class Model implements Arrayable,
      * Save a new model and return the instance.
      *
      * @param array $attributes
-     *
+     * @param array $metadata
      * @return static
      * @psalm-suppress LessSpecificReturnStatement
      */
-    public static function create(array $attributes): self
+    public static function create(array $attributes, array $metadata = []): self
     {
         return tap(
-            (new static())->newInstance($attributes),
+            (new static())->newInstance($attributes, $metadata),
             static function ($instance) {
                 $instance->save();
             }
