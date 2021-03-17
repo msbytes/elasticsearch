@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Matchory\Elasticsearch;
 
+use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Collection as BaseCollection;
 use JsonException;
 use stdClass;
@@ -145,7 +146,9 @@ class Collection extends BaseCollection
     public function toArray(): array
     {
         return array_map(static function ($item): array {
-            return $item->toArray();
+            return $item instanceof Arrayable
+                ? $item->toArray()
+                : $item;
         }, $this->items);
     }
 
