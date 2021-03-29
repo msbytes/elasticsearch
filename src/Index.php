@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace Matchory\Elasticsearch;
 
+use ArrayObject;
 use Elasticsearch\Client;
 use Matchory\Elasticsearch\Interfaces\ConnectionInterface;
+use TypeError;
 
 use function array_unique;
 use function count;
+use function is_array;
+use function is_string;
 
 /**
  * Class Index
@@ -106,7 +110,7 @@ class Index
     /**
      * Aliases the index shall be configured with.
      *
-     * @var string[]
+     * @var array<string, array<string, mixed>|string|ArrayObject>
      */
     protected $aliases = [];
 
@@ -188,16 +192,28 @@ class Index
      * searching, and routing values. An alias cannot have the same name as
      * an index.
      *
-     * @param string     $alias   Name of the alias to add.
-     * @param array|null $options Options to pass to the alias.
+     * @param string                        $alias   Name of the alias to add.
+     * @param array|ArrayObject|string|null $options Options to pass to
+     *                                               the alias.
      *
      * @return $this
      * @see https://www.elastic.co/guide/en/elasticsearch/reference/master/indices-aliases.html
      * @see https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-create-index.html#create-index-aliases
      */
-    public function alias(string $alias, ?array $options = null): self
+    public function alias(string $alias, $options = null): self
     {
-        $this->aliases[$alias] = $options ?? [];
+        if (
+            $options !== null &&
+            ! is_string($options) &&
+            ! is_array($options)
+        ) {
+            throw new TypeError(
+                'Alias options may be passed as an array, a string ' .
+                'routing key, or literal null.'
+            );
+        }
+
+        $this->aliases[$alias] = $options ?? new ArrayObject();
 
         return $this;
     }
