@@ -51,6 +51,11 @@ class Collection extends BaseCollection
     protected $shards;
 
     /**
+     * @var array|null
+     */
+    protected $suggestions;
+
+    /**
      * Collection constructor.
      *
      * @param array         $items
@@ -60,6 +65,7 @@ class Collection extends BaseCollection
      * @param bool|null     $timedOut
      * @param string|null   $scrollId
      * @param stdClass|null $shards
+     * @param array|null    $suggestions
      */
     public function __construct(
         array $items = [],
@@ -68,7 +74,8 @@ class Collection extends BaseCollection
         ?float $duration = null,
         ?bool $timedOut = null,
         ?string $scrollId = null,
-        ?stdClass $shards = null
+        ?stdClass $shards = null,
+        ?array $suggestions = null
     ) {
         parent::__construct($items);
 
@@ -79,6 +86,7 @@ class Collection extends BaseCollection
         $this->timedOut = $timedOut;
         $this->scrollId = $scrollId;
         $this->shards = $shards;
+        $this->suggestions = $suggestions;
     }
 
     public static function fromResponse(
@@ -92,6 +100,7 @@ class Collection extends BaseCollection
         $timedOut = (bool)$response['timed_out'];
         $scrollId = (string)($response['_scroll_id'] ?? null);
         $shards = (object)$response['_shards'];
+        $suggestions = $response['suggest'] ?? [];
         $total = (int)(is_array($response['hits']['total'])
             ? $response['hits']['total']['value']
             : $response['hits']['total']
@@ -104,7 +113,8 @@ class Collection extends BaseCollection
             $duration,
             $timedOut,
             $scrollId,
-            $shards
+            $shards,
+            $suggestions
         );
     }
 
@@ -136,6 +146,18 @@ class Collection extends BaseCollection
     public function getShards(): ?stdClass
     {
         return $this->shards;
+    }
+
+    public function getAllSuggestions(): BaseCollection
+    {
+        return BaseCollection
+            ::make($this->suggestions)
+            ->mapInto(BaseCollection::class);
+    }
+
+    public function getSuggestions(string $name): BaseCollection
+    {
+        return new BaseCollection($this->suggestions[$name] ?? []);
     }
 
     /**
