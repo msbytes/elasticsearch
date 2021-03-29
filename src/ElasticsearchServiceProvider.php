@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Matchory\Elasticsearch;
 
 use Elasticsearch\ClientBuilder as ElasticBuilder;
@@ -21,7 +23,6 @@ use Matchory\Elasticsearch\Factories\ClientFactory;
 use Matchory\Elasticsearch\Interfaces\ClientFactoryInterface;
 use Matchory\Elasticsearch\Interfaces\ConnectionInterface;
 use Matchory\Elasticsearch\Interfaces\ConnectionResolverInterface;
-use Psr\Log\LoggerInterface;
 use Psr\SimpleCache\CacheInterface;
 
 use function class_exists;
@@ -197,7 +198,7 @@ class ElasticsearchServiceProvider extends ServiceProvider
                     : null;
 
                 $logger = Config::get('es.logger') && $app->bound('es.logger')
-                    ? $app->make(LoggerInterface::class)
+                    ? $app->make('es.logger')
                     : null;
 
                 return new ConnectionManager(
