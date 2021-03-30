@@ -6,22 +6,27 @@ namespace Matchory\Elasticsearch;
 
 use ArrayAccess;
 use BadMethodCallException;
+use Carbon\Exceptions\InvalidFormatException;
+use Illuminate\Contracts\Encryption\DecryptException;
+use Illuminate\Contracts\Encryption\EncryptException;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Contracts\Queue\QueueableEntity;
 use Illuminate\Contracts\Routing\UrlRoutable;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Support\Jsonable;
-use Illuminate\Database\Eloquent\Concerns\GuardsAttributes;
-use Illuminate\Database\Eloquent\Concerns\HasAttributes;
-use Illuminate\Database\Eloquent\Concerns\HasEvents;
-use Illuminate\Database\Eloquent\Concerns\HidesAttributes;
-use Illuminate\Database\Eloquent\InvalidCastException;
+use Illuminate\Database\Eloquent\JsonEncodingException;
 use Illuminate\Database\Eloquent\MassAssignmentException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection as BaseCollection;
+use Illuminate\Support\Str;
 use Illuminate\Support\Traits\ForwardsCalls;
 use JsonException;
 use JsonSerializable;
+use Matchory\Elasticsearch\Compatibility\Exceptions\InvalidCastException;
+use Matchory\Elasticsearch\Compatibility\GuardsAttributes;
+use Matchory\Elasticsearch\Compatibility\HasAttributes;
+use Matchory\Elasticsearch\Compatibility\HasEvents;
+use Matchory\Elasticsearch\Compatibility\HidesAttributes;
 use Matchory\Elasticsearch\Concerns\HasGlobalScopes;
 use Matchory\Elasticsearch\Exceptions\DocumentNotFoundException;
 use Matchory\Elasticsearch\Interfaces\ConnectionInterface as Connection;
@@ -249,15 +254,16 @@ class Model implements Arrayable,
     /**
      * Save a new model and return the instance.
      *
-     * @param array $attributes
+     * @param array       $attributes
      * @param string|null $id
+     *
      * @return static
      * @psalm-suppress LessSpecificReturnStatement
      */
     public static function create(array $attributes, ?string $id = null): self
     {
         $metadata = [];
-        if (!is_null($id)) {
+        if ( ! is_null($id)) {
             $metadata['_id'] = $id;
         }
 
@@ -491,6 +497,12 @@ class Model implements Arrayable,
      *
      * @return static
      *
+     * @throws DecryptException
+     * @throws EncryptException
+     * @throws InvalidCastException
+     * @throws InvalidFormatException
+     * @throws JsonEncodingException
+     * @throws JsonException
      * @throws MassAssignmentException
      */
     public function fill(array $attributes): self
@@ -520,6 +532,12 @@ class Model implements Arrayable,
      * @param array $attributes
      *
      * @return static
+     * @throws DecryptException
+     * @throws EncryptException
+     * @throws InvalidCastException
+     * @throws InvalidFormatException
+     * @throws JsonEncodingException
+     * @throws JsonException
      * @throws MassAssignmentException
      */
     public function forceFill(array $attributes): self
@@ -535,7 +553,10 @@ class Model implements Arrayable,
      * @param mixed $offset
      *
      * @return bool
+     * @throws DecryptException
      * @throws InvalidCastException
+     * @throws InvalidFormatException
+     * @throws JsonException
      */
     public function offsetExists($offset): bool
     {
@@ -548,7 +569,10 @@ class Model implements Arrayable,
      * @param mixed $offset
      *
      * @return mixed
+     * @throws DecryptException
      * @throws InvalidCastException
+     * @throws InvalidFormatException
+     * @throws JsonException
      */
     public function offsetGet($offset)
     {
@@ -562,6 +586,12 @@ class Model implements Arrayable,
      * @param mixed $value
      *
      * @return void
+     * @throws DecryptException
+     * @throws EncryptException
+     * @throws InvalidCastException
+     * @throws InvalidFormatException
+     * @throws JsonEncodingException
+     * @throws JsonException
      */
     public function offsetSet($offset, $value): void
     {
@@ -586,7 +616,10 @@ class Model implements Arrayable,
      * @param string $name
      *
      * @return mixed|null
+     * @throws DecryptException
      * @throws InvalidCastException
+     * @throws InvalidFormatException
+     * @throws JsonException
      */
     public function __get(string $name)
     {
@@ -596,10 +629,16 @@ class Model implements Arrayable,
     /**
      * Handle model properties setter
      *
-     * @param $name
-     * @param $value
+     * @param string $name
+     * @param        $value
      *
      * @return void
+     * @throws DecryptException
+     * @throws EncryptException
+     * @throws InvalidCastException
+     * @throws InvalidFormatException
+     * @throws JsonEncodingException
+     * @throws JsonException
      */
     public function __set(string $name, $value): void
     {
@@ -612,7 +651,10 @@ class Model implements Arrayable,
      * @param string $key
      *
      * @return bool
+     * @throws DecryptException
      * @throws InvalidCastException
+     * @throws InvalidFormatException
+     * @throws JsonException
      */
     public function __isset(string $key): bool
     {
@@ -639,6 +681,10 @@ class Model implements Arrayable,
      * Get model as array
      *
      * @return array
+     * @throws DecryptException
+     * @throws InvalidCastException
+     * @throws InvalidFormatException
+     * @throws JsonException
      */
     public function toArray(): array
     {
@@ -651,6 +697,9 @@ class Model implements Arrayable,
      * @param int $options
      *
      * @return string
+     * @throws DecryptException
+     * @throws InvalidCastException
+     * @throws InvalidFormatException
      * @throws JsonException
      */
     public function toJson($options = 0): string
@@ -663,6 +712,10 @@ class Model implements Arrayable,
 
     /**
      * @inheritDoc
+     * @throws DecryptException
+     * @throws InvalidCastException
+     * @throws InvalidFormatException
+     * @throws JsonException
      */
     public function jsonSerialize(): array
     {
@@ -801,6 +854,7 @@ class Model implements Arrayable,
      * @param string|null $type       (Deprecated) Mapping type of the document
      *
      * @return static
+     * @noinspection PhpDeprecationInspection
      */
     public function newInstance(
         array $attributes = [],
@@ -839,6 +893,10 @@ class Model implements Arrayable,
      * Retrieves the result score.
      *
      * @return float|null
+     * @throws DecryptException
+     * @throws InvalidCastException
+     * @throws InvalidFormatException
+     * @throws JsonException
      * @internal
      */
     public function getScore(): ?float
@@ -850,6 +908,10 @@ class Model implements Arrayable,
      * Retrieves the result highlights.
      *
      * @return array<string, mixed>|null
+     * @throws DecryptException
+     * @throws InvalidCastException
+     * @throws InvalidFormatException
+     * @throws JsonException
      * @internal
      */
     public function getHighlight(): ?array
@@ -863,7 +925,10 @@ class Model implements Arrayable,
      * @param string|null $field
      *
      * @return mixed
+     * @throws DecryptException
      * @throws InvalidCastException
+     * @throws InvalidFormatException
+     * @throws JsonException
      */
     public function getHighlights($field = null)
     {
@@ -880,7 +945,10 @@ class Model implements Arrayable,
      * Delete model record
      *
      * @return void
+     * @throws DecryptException
      * @throws InvalidCastException
+     * @throws InvalidFormatException
+     * @throws JsonException
      */
     public function delete(): void
     {
@@ -909,7 +977,12 @@ class Model implements Arrayable,
      * Save the model to the index.
      *
      * @return static
+     * @throws DecryptException
+     * @throws EncryptException
      * @throws InvalidCastException
+     * @throws InvalidFormatException
+     * @throws JsonEncodingException
+     * @throws JsonException
      */
     public function save(): self
     {
@@ -929,9 +1002,7 @@ class Model implements Arrayable,
         // record that is already in this index using the current ID to only
         // update this model. Otherwise, we'll just insert it.
         if ($this->exists) {
-            $saved = $this->isDirty()
-                ? $this->performUpdate($query)
-                : true;
+            $saved = ! $this->isDirty() || $this->performUpdate($query);
         }
 
         // If the model is brand new, we'll insert it into our index and set the
@@ -955,7 +1026,12 @@ class Model implements Arrayable,
      * Save the model to the index without raising any events.
      *
      * @return static
+     * @throws DecryptException
+     * @throws EncryptException
      * @throws InvalidCastException
+     * @throws InvalidFormatException
+     * @throws JsonEncodingException
+     * @throws JsonException
      */
     public function saveQuietly(): self
     {
@@ -978,7 +1054,10 @@ class Model implements Arrayable,
      * Retrieves the model key
      *
      * @return string|null
+     * @throws DecryptException
      * @throws InvalidCastException
+     * @throws InvalidFormatException
+     * @throws JsonException
      */
     public function getId(): ?string
     {
@@ -991,7 +1070,10 @@ class Model implements Arrayable,
      * Get the value of the model's primary key.
      *
      * @return string|null
+     * @throws DecryptException
      * @throws InvalidCastException
+     * @throws InvalidFormatException
+     * @throws JsonException
      */
     public function getKey(): ?string
     {
@@ -1008,7 +1090,11 @@ class Model implements Arrayable,
 
     /**
      * @inheritDoc
+     * @return string|null
+     * @throws DecryptException
      * @throws InvalidCastException
+     * @throws InvalidFormatException
+     * @throws JsonException
      */
     public function getQueueableId(): ?string
     {
@@ -1026,7 +1112,11 @@ class Model implements Arrayable,
 
     /**
      * @inheritDoc
+     * @return float|mixed|string|null
+     * @throws DecryptException
      * @throws InvalidCastException
+     * @throws InvalidFormatException
+     * @throws JsonException
      */
     public function getRouteKey()
     {
@@ -1097,6 +1187,7 @@ class Model implements Arrayable,
      * Get a new query builder scoped to the current model.
      *
      * @return Query
+     * @noinspection PhpDeprecationInspection
      */
     public function newQuery(): Query
     {
@@ -1199,7 +1290,11 @@ class Model implements Arrayable,
      * @param static|null $model
      *
      * @return bool
+     * @throws DecryptException
      * @throws InvalidCastException
+     * @throws InvalidFormatException
+     * @throws JsonException
+     * @noinspection PhpDeprecationInspection
      */
     public function is(?self $model): bool
     {
@@ -1216,7 +1311,10 @@ class Model implements Arrayable,
      * @param static|null $model
      *
      * @return bool
+     * @throws DecryptException
      * @throws InvalidCastException
+     * @throws InvalidFormatException
+     * @throws JsonException
      */
     public function isNot(?self $model): bool
     {
@@ -1229,7 +1327,11 @@ class Model implements Arrayable,
      * @param string $key
      *
      * @return mixed
+     * @throws DecryptException
      * @throws InvalidCastException
+     * @throws InvalidFormatException
+     * @throws JsonException
+     * @noinspection PhpDeprecationInspection
      */
     public function getAttribute(string $key)
     {
@@ -1280,6 +1382,63 @@ class Model implements Arrayable,
     }
 
     /**
+     * Set a given attribute on the model.
+     *
+     * @param string $key
+     * @param mixed  $value
+     *
+     * @return mixed
+     * @throws DecryptException
+     * @throws InvalidCastException
+     * @throws InvalidFormatException
+     * @throws JsonException
+     * @throws EncryptException
+     * @throws JsonEncodingException
+     */
+    public function setAttribute(string $key, $value)
+    {
+        // First we will check for the presence of a mutator for the set
+        // operation which simply lets the developers tweak the attribute as it
+        // is set on the model, such as "json_encoding" an listing of data
+        // for storage.
+        if ($this->hasSetMutator($key)) {
+            return $this->setMutatedAttributeValue($key, $value);
+        }
+
+        if ($value && $this->isDateAttribute($key)) {
+            $value = $this->fromDateTime($value);
+        }
+
+        // If an attribute is listed as a "date", we'll convert it from a
+        // DateTime instance into a form proper for storage on the index.
+        // We will auto set the values.
+        if ($this->isClassCastable($key)) {
+            $this->setClassCastableAttribute($key, $value);
+
+            return $this;
+        }
+
+        if ( ! is_null($value) && $this->isJsonCastable($key)) {
+            $value = $this->castAttributeAsJson($key, $value);
+        }
+
+        // If this attribute contains a JSON ->, we'll set the proper value in
+        // the attribute's underlying array. This takes care of properly nesting
+        // an attribute in the array's value in the case of deeply nested items.
+        if (Str::contains($key, '->')) {
+            return $this->fillJsonAttribute($key, $value);
+        }
+
+        if ( ! is_null($value) && $this->isEncryptedCastable($key)) {
+            $value = $this->castAttributeAsEncryptedString($key, $value);
+        }
+
+        $this->attributes[$key] = $value;
+
+        return $this;
+    }
+
+    /**
      * Get the casts array.
      *
      * @return array
@@ -1314,33 +1473,6 @@ class Model implements Arrayable,
     }
 
     /**
-     * Transform a raw model value using mutators, casts, etc.
-     *
-     * @param string $key
-     * @param mixed  $value
-     *
-     * @return mixed
-     */
-    protected function transformModelValue(string $key, $value)
-    {
-        // If the attribute has a get mutator, we will call that, then return
-        // what it returns as the value, which is useful for transforming values
-        // on  retrieval from the model to a form that is more useful for usage.
-        if ($this->hasGetMutator($key)) {
-            return $this->mutateAttribute($key, $value);
-        }
-
-        // If the attribute exists within the cast array, we will convert it to
-        // an appropriate native PHP type dependent upon the associated value
-        // given with the key in the pair. Dayle made this comment line up.
-        if ($this->hasCast($key)) {
-            return $this->castAttribute($key, $value);
-        }
-
-        return $value;
-    }
-
-    /**
      * Retrieves result metadata retrieved from the query
      *
      * @return array
@@ -1369,6 +1501,10 @@ class Model implements Arrayable,
      * @param string $key
      *
      * @return mixed
+     * @throws DecryptException
+     * @throws InvalidCastException
+     * @throws InvalidFormatException
+     * @throws JsonException
      */
     public function getResultMetadataValue(string $key)
     {
@@ -1378,10 +1514,44 @@ class Model implements Arrayable,
     }
 
     /**
+     * Transform a raw model value using mutators, casts, etc.
+     *
+     * @param string $key
+     * @param mixed  $value
+     *
+     * @return mixed
+     * @throws InvalidCastException
+     * @throws JsonException
+     * @throws InvalidFormatException
+     * @throws DecryptException
+     */
+    protected function transformModelValue(string $key, $value)
+    {
+        // If the attribute has a get mutator, we will call that, then return
+        // what it returns as the value, which is useful for transforming values
+        // on  retrieval from the model to a form that is more useful for usage.
+        if ($this->hasGetMutator($key)) {
+            return $this->mutateAttribute($key, $value);
+        }
+
+        // If the attribute exists within the cast array, we will convert it to
+        // an appropriate native PHP type dependent upon the associated value
+        // given with the key in the pair. Dayle made this comment line up.
+        if ($this->hasCast($key)) {
+            return $this->castAttribute($key, $value);
+        }
+
+        return $value;
+    }
+
+    /**
      * Perform the actual delete query on this model instance.
      *
      * @return void
+     * @throws DecryptException
      * @throws InvalidCastException
+     * @throws InvalidFormatException
+     * @throws JsonException
      */
     protected function performDeleteOnModel(): void
     {
@@ -1408,7 +1578,12 @@ class Model implements Arrayable,
      * @param Query $query
      *
      * @return bool
+     * @throws DecryptException
+     * @throws EncryptException
      * @throws InvalidCastException
+     * @throws InvalidFormatException
+     * @throws JsonEncodingException
+     * @throws JsonException
      */
     protected function performInsert(Query $query): bool
     {
@@ -1449,6 +1624,12 @@ class Model implements Arrayable,
      * @param array $attributes
      *
      * @return void
+     * @throws DecryptException
+     * @throws EncryptException
+     * @throws InvalidCastException
+     * @throws InvalidFormatException
+     * @throws JsonEncodingException
+     * @throws JsonException
      */
     protected function insertAndSetId(Query $query, array $attributes): void
     {
@@ -1471,7 +1652,10 @@ class Model implements Arrayable,
      * @param Query $query
      *
      * @return bool
+     * @throws DecryptException
      * @throws InvalidCastException
+     * @throws InvalidFormatException
+     * @throws JsonException
      */
     protected function performUpdate(Query $query): bool
     {
@@ -1509,7 +1693,10 @@ class Model implements Arrayable,
      * @param Query $query
      *
      * @return Query
+     * @throws DecryptException
      * @throws InvalidCastException
+     * @throws InvalidFormatException
+     * @throws JsonException
      */
     protected function setKeysForSaveQuery(Query $query): Query
     {
@@ -1522,7 +1709,10 @@ class Model implements Arrayable,
      * Get the primary key value for a save query.
      *
      * @return string
+     * @throws DecryptException
      * @throws InvalidCastException
+     * @throws InvalidFormatException
+     * @throws JsonException
      */
     protected function getKeyForSaveQuery(): ?string
     {
