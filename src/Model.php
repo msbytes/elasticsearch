@@ -60,7 +60,7 @@ use const DATE_ATOM;
  * @property-read string|null _index
  * @property-read string|null _type
  * @property-read float|null  _score
- * @property-read array|null  _highlight
+ * @property-read array|null  highlight
  *
  * @package Matchory\Elasticsearch
  */
@@ -916,7 +916,7 @@ class Model implements Arrayable,
      */
     public function getHighlight(): ?array
     {
-        return $this->getResultMetadataValue('_highlight');
+        return $this->getResultMetadataValue('highlight');
     }
 
     /**
@@ -932,7 +932,7 @@ class Model implements Arrayable,
      */
     public function getHighlights($field = null)
     {
-        $highlights = $this->getAttribute('_highlight');
+        $highlights = $this->getAttribute('highlight');
 
         if ($field && array_key_exists($field, $highlights)) {
             return $highlights[$field];
