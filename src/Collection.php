@@ -26,7 +26,7 @@ class Collection extends BaseCollection
     protected $total;
 
     /**
-     * @var int|null
+     * @var float|null
      */
     protected $maxScore;
 
@@ -70,7 +70,7 @@ class Collection extends BaseCollection
     public function __construct(
         array $items = [],
         ?int $total = null,
-        ?int $maxScore = null,
+        ?float $maxScore = null,
         ?float $duration = null,
         ?bool $timedOut = null,
         ?string $scrollId = null,
@@ -95,8 +95,8 @@ class Collection extends BaseCollection
     ): self {
         $items = $items ?? $response['hits']['hits'] ?? [];
 
-        $maxScore = (int)$response['hits']['max_score'];
-        $duration = (int)$response['took'];
+        $maxScore = (float)$response['hits']['max_score'];
+        $duration = (float)$response['took'];
         $timedOut = (bool)$response['timed_out'];
         $scrollId = (string)($response['_scroll_id'] ?? null);
         $shards = (object)$response['_shards'];
@@ -123,7 +123,7 @@ class Collection extends BaseCollection
         return $this->total;
     }
 
-    public function getMaxScore(): ?int
+    public function getMaxScore(): ?float
     {
         return $this->maxScore;
     }
