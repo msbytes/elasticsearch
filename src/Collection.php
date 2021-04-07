@@ -170,7 +170,7 @@ class Collection extends BaseCollection
         return new BaseCollection($this->suggestions[$name] ?? []);
     }
 
-    public function getAggregations():BaseCollection
+    public function getAggregations(): BaseCollection
     {
         return new BaseCollection($this->aggregations);
     }
