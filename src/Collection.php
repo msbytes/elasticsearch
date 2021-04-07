@@ -56,6 +56,11 @@ class Collection extends BaseCollection
     protected $suggestions;
 
     /**
+     * @var array|null
+     */
+    protected $aggregations;
+
+    /**
      * Collection constructor.
      *
      * @param array         $items
@@ -66,6 +71,7 @@ class Collection extends BaseCollection
      * @param string|null   $scrollId
      * @param stdClass|null $shards
      * @param array|null    $suggestions
+     * @param array|null    $aggregations
      */
     public function __construct(
         array $items = [],
@@ -75,7 +81,8 @@ class Collection extends BaseCollection
         ?bool $timedOut = null,
         ?string $scrollId = null,
         ?stdClass $shards = null,
-        ?array $suggestions = null
+        ?array $suggestions = null,
+        ?array $aggregations = null
     ) {
         parent::__construct($items);
 
@@ -87,6 +94,7 @@ class Collection extends BaseCollection
         $this->scrollId = $scrollId;
         $this->shards = $shards;
         $this->suggestions = $suggestions;
+        $this->aggregations = $aggregations;
     }
 
     public static function fromResponse(
@@ -101,6 +109,7 @@ class Collection extends BaseCollection
         $scrollId = (string)($response['_scroll_id'] ?? null);
         $shards = (object)$response['_shards'];
         $suggestions = $response['suggest'] ?? [];
+        $aggregations = $response['aggregations'] ?? [];
         $total = (int)(is_array($response['hits']['total'])
             ? $response['hits']['total']['value']
             : $response['hits']['total']
@@ -114,7 +123,8 @@ class Collection extends BaseCollection
             $timedOut,
             $scrollId,
             $shards,
-            $suggestions
+            $suggestions,
+            $aggregations,
         );
     }
 
@@ -158,6 +168,11 @@ class Collection extends BaseCollection
     public function getSuggestions(string $name): BaseCollection
     {
         return new BaseCollection($this->suggestions[$name] ?? []);
+    }
+
+    public function getAggregations():BaseCollection
+    {
+        return new BaseCollection($this->aggregations);
     }
 
     /**
