@@ -10,6 +10,12 @@ use Illuminate\Support\HtmlString;
 
 use const EXTR_OVERWRITE;
 
+/**
+ * Pagination
+ *
+ * @mixin Collection
+ * @package Matchory\Elasticsearch
+ */
 class Pagination extends LengthAwarePaginator
 {
     /**
