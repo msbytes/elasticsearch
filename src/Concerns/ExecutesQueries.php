@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Matchory\Elasticsearch\Concerns;
 
 use DateTime;
+use Illuminate\Support\Facades\Request;
 use JsonException;
 use Matchory\Elasticsearch\Classes\Bulk;
 use Matchory\Elasticsearch\Collection;
@@ -12,7 +13,6 @@ use Matchory\Elasticsearch\Exceptions\DocumentNotFoundException;
 use Matchory\Elasticsearch\Model;
 use Matchory\Elasticsearch\Pagination;
 use Matchory\Elasticsearch\Query;
-use Matchory\Elasticsearch\Request;
 use Psr\SimpleCache\CacheInterface;
 use Psr\SimpleCache\InvalidArgumentException;
 use Throwable;
