@@ -1303,7 +1303,7 @@ trait BuildsFluentQueries
     /**
      * check if it's a valid operator
      *
-     * @param $string
+     * @param string $string
      *
      * @return bool
      */
@@ -1338,15 +1338,24 @@ trait BuildsFluentQueries
         $body[self::FIELD_QUERY] = $body[self::FIELD_QUERY] ?? [];
 
         if (count($this->must)) {
-            $body[self::FIELD_QUERY]['bool']['must'] = $this->must;
+            $body[self::FIELD_QUERY]['bool']['must'] = array_merge(
+                $body[self::FIELD_QUERY]['bool']['must'] ?? [],
+                $this->must,
+            );
         }
 
         if (count($this->must_not)) {
-            $body[self::FIELD_QUERY]['bool']['must_not'] = $this->must_not;
+            $body[self::FIELD_QUERY]['bool']['must_not'] = array_merge(
+                $body[self::FIELD_QUERY]['bool']['must_not'] ?? [],
+                $this->must_not,
+            );
         }
 
         if (count($this->filter)) {
-            $body[self::FIELD_QUERY]['bool']['filter'] = $this->filter;
+            $body[self::FIELD_QUERY]['bool']['filter'] = array_merge(
+                $body[self::FIELD_QUERY]['bool']['filter'] ?? [],
+                $this->filter,
+            );
         }
 
         if (count($body[self::FIELD_QUERY]) === 0) {
