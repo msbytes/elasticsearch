@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Matchory\Elasticsearch\Concerns;
 
+use InvalidArgumentException;
 use Matchory\Elasticsearch\Classes\Search;
 use Matchory\Elasticsearch\Model;
 use Matchory\Elasticsearch\Query;
@@ -15,9 +16,13 @@ use function array_merge;
 use function array_unique;
 use function array_values;
 use function count;
+use function implode;
 use function in_array;
 use function is_array;
 use function is_callable;
+use function is_string;
+use function tap;
+use function value;
 
 use const SORT_REGULAR;
 
@@ -472,14 +477,292 @@ trait BuildsFluentQueries
         return $this->id($id);
     }
 
+    public function filter(string $type, array $parameters): self
+    {
+        $this->filter[] = [
+            $type => $parameters,
+        ];
+
+        return $this;
+    }
+
     /**
-     * Set the query where clause
+     * Shorthand to add a "term" filter.
+     *
+     * @param string                $field Name of the field to add a filter for
+     * @param string|array|callable $value Filter value. Either a string value,
+     *                                     an array of Elasticsearch parameters,
+     *                                     or a callable that returns either of
+     *                                     the previous.
+     *
+     * @return $this
+     */
+    public function termFilter(string $field, $value): self
+    {
+        return $this->filter('term', [
+            $field => value($value, $this, $field),
+        ]);
+    }
+
+    /**
+     * Shorthand to add a "terms" filter.
+     *
+     * @param string         $field Name of the field to add a filter for
+     * @param array|callable $value Filter value. Either a string value, an
+     *                              array of Elasticsearch parameters, or a
+     *                              callable that returns either of the previous
+     * @param float|null     $boost Floating point number used to decrease or
+     *                              increase the relevance scores of a query.
+     *                              Defaults to 1.0. You can use the boost
+     *                              parameter to adjust relevance scores for
+     *                              searches containing two or more queries.
+     *                              Boost values are relative to the default
+     *                              value of 1.0. A boost value between 0 and
+     *                              1.0 decreases the relevance score. A value
+     *                              greater than 1.0 increases the relevance
+     *                              score.
+     *
+     * @return $this
+     */
+    public function termsFilter(
+        string $field,
+        $value,
+        ?float $boost = null
+    ): BuildsFluentQueries {
+        $value = value($value, $this, $field);
+
+        if ($boost === null) {
+            return $this->filter('terms', [
+                $field => $value,
+            ]);
+        }
+
+        return $this->filter('terms', [
+            $field => $value,
+            'boost' => $boost,
+        ]);
+    }
+
+    /**
+     * Shorthand to add a "range" filter.
+     *
+     * @param string                $field    Name of the field to add a filter
+     *                                        for
+     * @param string|array|callable $operator Range comparison operator as a
+     *                                        string, an array of custom range
+     *                                        comparison parameters or a
+     *                                        callable that returns either of
+     *                                        the previous.
+     * @param string|array|callable $value    Filter value. Either a string
+     *                                        value, an array of Elasticsearch
+     *                                        parameters, or a callable that
+     *                                        returns either of the previous.
+     *                                        Only used if a string operator has
+     *                                        been passed as the second argument
+     *
+     * @return $this
+     * @example $query->rangeFilter('year', ['gte' => '2006'])
+     * @example $query->rangeFilter('year', ['gte' => '2006', 'lt' => '2021'])
+     * @example $query->rangeFilter('year', fn($q, $field) => 'lt', '2021')
+     * @example $query->rangeFilter('year', fn($q, $field) => ['lt' => '2021'])
+     *
+     * @example $query->rangeFilter('year', 'gt', '2006')
+     */
+    public function rangeFilter(string $field, $operator, $value = null): self
+    {
+        $operator = value($operator, $this, $field);
+
+        if (is_string($operator) && $value) {
+            return $this->filter('range', [
+                [
+                    $field => [
+                        $operator => value($value, $this, $field),
+                    ],
+                ],
+            ]);
+        }
+
+        return $this->filter('range', [
+            [
+                $field => $operator,
+            ],
+        ]);
+    }
+
+    /**
+     * Shorthand to add a "match" filter.
+     *
+     * @param string                $field Name of the field to add a filter for
+     * @param string|array|callable $value Filter value. Either a string value,
+     *                                     an array of Elasticsearch parameters,
+     *                                     or a callable that returns either of
+     *                                     the previous.
+     *
+     * @return $this
+     */
+    public function matchFilter(string $field, $value): self
+    {
+        return $this->filter('match', [
+            $field => value($value, $this, $field),
+        ]);
+    }
+
+    /**
+     * Shorthand to add a "prefix" filter.
+     *
+     * @param string                $field Name of the field to add a filter for
+     * @param string|array|callable $value Filter value. Either a string value,
+     *                                     an array of Elasticsearch parameters,
+     *                                     or a callable that returns either of
+     *                                     the previous.
+     *
+     * @return $this
+     */
+    public function prefixFilter(string $field, $value): self
+    {
+        return $this->filter('prefix', [
+            $field => value($value, $this, $field),
+        ]);
+    }
+
+    /**
+     * Shorthand to add a "regexp" filter.
+     *
+     * @param string                $field                 Name of the field to
+     *                                                     add a filter for
+     * @param string|array|callable $value                 Filter value. Either
+     *                                                     a string value, an
+     *                                                     array of
+     *                                                     Elasticsearch
+     *                                                     parameters, or a
+     *                                                     callable that returns
+     *                                                     either of the
+     *                                                     previous.
+     * @param int|null              $flags                 Enables optional
+     *                                                     operators for the
+     *                                                     regular expression.
+     * @param bool|null             $caseSensitivity       Allows case
+     *                                                     insensitive matching
+     *                                                     of the regular
+     *                                                     expression
+     *                                                     value with the
+     *                                                     indexed field values
+     *                                                     when set to true.
+     *                                                     Default is false
+     *                                                     which means the case
+     *                                                     sensitivity of
+     *                                                     matching depends on
+     *                                                     the underlying
+     *                                                     field’s mapping.
+     * @param int|null              $maxDeterminizedStates Maximum number of
+     *                                                     automaton states
+     *                                                     required for the
+     *                                                     query.
+     *                                                     Default is 10000.
+     *                                                     Elasticsearch uses
+     *                                                     Apache Lucene
+     *                                                     internally to parse
+     *                                                     regular expressions.
+     *                                                     Lucene converts each
+     *                                                     regular expression to
+     *                                                     a finite automaton
+     *                                                     containing a number
+     *                                                     of determinized
+     *                                                     states. You can use
+     *                                                     this parameter to
+     *                                                     prevent that
+     *                                                     conversion from
+     *                                                     unintentionally
+     *                                                     consuming too
+     *                                                     many resources. You
+     *                                                     may need to increase
+     *                                                     this limit to run
+     *                                                     complex regular
+     *                                                     expressions.
+     *
+     * @return $this
+     * @see https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-regexp-query.html
+     * @see https://www.elastic.co/guide/en/elasticsearch/reference/current/regexp-syntax.html#regexp-optional-operators
+     */
+    public function regexpFilter(
+        string $field,
+        $value,
+        ?int $flags = null,
+        ?bool $caseSensitivity = null,
+        ?int $maxDeterminizedStates = null
+    ): self {
+        $value = value($value, $this, $field);
+
+        if (is_array($value) || (
+                $flags === null &&
+                $caseSensitivity === null &&
+                $maxDeterminizedStates === null
+            )) {
+            return $this->filter('regexp', [
+                $field => $value,
+            ]);
+        }
+
+        $parameters = [
+            'value' => $value,
+        ];
+
+        $stringFlags = $this->resolveRegexpFlags($flags);
+
+        if ($stringFlags) {
+            $parameters['flags'] = $stringFlags;
+        }
+
+        if ($caseSensitivity !== null) {
+            $parameters['case_insensitive'] = $caseSensitivity;
+        }
+
+        if ($maxDeterminizedStates !== null) {
+            $parameters['max_determinized_states'] = $maxDeterminizedStates;
+        }
+
+        return $this->filter('regexp', [
+            $field => $parameters,
+        ]);
+    }
+
+    /**
+     * Add a condition to find documents which are some distance away from the
+     * given geo point.
+     *
+     * @see https://www.elastic.co/guide/en/elasticsearch/reference/2.4/query-dsl-geo-distance-query.html
+     *
+     * @param string|callable $name     A name of the field.
+     * @param mixed           $value    A starting geo point which can be
+     *                                  represented by a string 'lat,lon', an
+     *                                  object like `{'lat': lat, 'lon': lon}`
+     *                                  or an array like `[lon,lat]`.
+     * @param string          $distance A distance from the starting geo point.
+     *                                  It can be for example '20km'.
+     *
+     * @return $this
+     */
+    public function distance($name, $value, string $distance): self
+    {
+        if (is_callable($name)) {
+            return tap($this, $name);
+        }
+
+        return $this->filter('geo_distance', [
+            $name => $value,
+            'distance' => $distance,
+        ]);
+    }
+
+    /**
+     * Adds a filter to the query
      *
      * @param string|callable $name
      * @param string          $operator
      * @param mixed|null      $value
      *
      * @return $this
+     * @throws InvalidArgumentException
      */
     public function where(
         $name,
@@ -504,38 +787,53 @@ trait BuildsFluentQueries
                     return $this->id((string)$value);
                 }
 
-                $this->filter[] = ['term' => [$name => $value]];
-                break;
+                return $this->termFilter($name, $value);
 
             case 'gt':
             case Query::OPERATOR_GREATER_THAN:
-                $this->filter[] = ['range' => [$name => ['gt' => $value]]];
-                break;
+                return $this->rangeFilter(
+                    $name,
+                    'gt',
+                    $value
+                );
 
             case 'gte':
             case Query::OPERATOR_GREATER_THAN_OR_EQUAL:
-                $this->filter[] = ['range' => [$name => ['gte' => $value]]];
-                break;
+                return $this->rangeFilter(
+                    $name,
+                    'gte',
+                    $value
+                );
 
             case 'lt':
             case Query::OPERATOR_LOWER_THAN:
-                $this->filter[] = ['range' => [$name => ['lt' => $value]]];
-                break;
+                return $this->rangeFilter(
+                    $name,
+                    'lt',
+                    $value
+                );
 
             case 'lte':
             case Query::OPERATOR_LOWER_THAN_OR_EQUAL:
-                $this->filter[] = ['range' => [$name => ['lte' => $value]]];
-                break;
+                return $this->rangeFilter(
+                    $name,
+                    'lte',
+                    $value
+                );
 
             case Query::OPERATOR_LIKE:
-                $this->must[] = ['match' => [$name => $value]];
-                break;
+                return $this->must('match', [
+                    $name => $value,
+                ]);
 
             case Query::OPERATOR_EXISTS:
-                $this->whereExists($name, (bool)$value);
-        }
+                return $this->whereExists($name, (bool)$value);
 
-        return $this;
+            default:
+                throw new InvalidArgumentException(
+                    "Unknown operator '{$operator}'"
+                );
+        }
     }
 
     /**
@@ -546,6 +844,7 @@ trait BuildsFluentQueries
      * @param mixed|null      $value
      *
      * @return Model|null
+     * @throws InvalidArgumentException
      */
     public function firstWhere(
         $name,
@@ -572,9 +871,7 @@ trait BuildsFluentQueries
         $value = null
     ): self {
         if (is_callable($name)) {
-            $name($this);
-
-            return $this;
+            return tap($this, $name);
         }
 
         if ( ! $this->isOperator($operator)) {
@@ -585,32 +882,38 @@ trait BuildsFluentQueries
         switch ($operator) {
             case 'eq':
             case Query::OPERATOR_EQUAL:
-                $this->must_not[] = ['term' => [$name => $value]];
-                break;
+                return $this->mustNot('term', [
+                    $name => $value,
+                ]);
 
             case 'gt':
             case Query::OPERATOR_GREATER_THAN:
-                $this->must_not[] = ['range' => [$name => ['gt' => $value]]];
-                break;
+                return $this->mustNot('range', [
+                    $name => ['gt' => $value],
+                ]);
 
             case 'gte':
             case Query::OPERATOR_GREATER_THAN_OR_EQUAL:
-                $this->must_not[] = ['range' => [$name => ['gte' => $value]]];
-                break;
+                return $this->mustNot('range', [
+                    $name => ['gte' => $value],
+                ]);
 
             case 'lt':
             case Query::OPERATOR_LOWER_THAN:
-                $this->must_not[] = ['range' => [$name => ['lt' => $value]]];
-                break;
+                return $this->mustNot('range', [
+                    $name => ['lt' => $value],
+                ]);
 
             case 'lte':
             case Query::OPERATOR_LOWER_THAN_OR_EQUAL:
-                $this->must_not[] = ['range' => [$name => ['lte' => $value]]];
-                break;
+                return $this->mustNot('range', [
+                    $name => ['lte' => $value],
+                ]);
 
             case Query::OPERATOR_LIKE:
-                $this->must_not[] = ['match' => [$name => $value]];
-                break;
+                return $this->mustNot('match', [
+                    $name => $value,
+                ]);
 
             case Query::OPERATOR_EXISTS:
                 $this->whereExists($name, ! $value);
@@ -637,16 +940,12 @@ trait BuildsFluentQueries
             [$firstValue, $lastValue] = $firstValue;
         }
 
-        $this->filter[] = [
-            'range' => [
-                $name => [
-                    'gte' => $firstValue,
-                    'lte' => $lastValue,
-                ],
+        return $this->filter('range', [
+            $name => [
+                'gte' => $firstValue,
+                'lte' => $lastValue,
             ],
-        ];
-
-        return $this;
+        ]);
     }
 
     /**
@@ -667,16 +966,12 @@ trait BuildsFluentQueries
             [$firstValue, $lastValue] = $firstValue;
         }
 
-        $this->must_not[] = [
-            'range' => [
-                $name => [
-                    'gte' => $firstValue,
-                    'lte' => $lastValue,
-                ],
+        return $this->mustNot('range', [
+            $name => [
+                'gte' => $firstValue,
+                'lte' => $lastValue,
             ],
-        ];
-
-        return $this;
+        ]);
     }
 
     /**
@@ -690,16 +985,10 @@ trait BuildsFluentQueries
     public function whereIn($name, $value = []): self
     {
         if (is_callable($name)) {
-            $name($this);
-
-            return $this;
+            return tap($this, $name);
         }
 
-        $this->filter[] = [
-            'terms' => [$name => $value],
-        ];
-
-        return $this;
+        return $this->termsFilter($name, $value);
     }
 
     /**
@@ -713,16 +1002,12 @@ trait BuildsFluentQueries
     public function whereNotIn($name, $value = []): self
     {
         if (is_callable($name)) {
-            $name($this);
-
-            return $this;
+            return tap($this, $name);
         }
 
-        $this->must_not[] = [
-            'terms' => [$name => $value],
-        ];
-
-        return $this;
+        return $this->mustNot('terms', [
+            $name => $value,
+        ]);
     }
 
     /**
@@ -736,47 +1021,45 @@ trait BuildsFluentQueries
     public function whereExists(string $name, bool $exists = true): self
     {
         if ($exists) {
-            $this->must[] = [
-                'exists' => ['field' => $name],
-            ];
-        } else {
-            $this->must_not[] = [
-                'exists' => ['field' => $name],
-            ];
+            return $this->must('exists', [
+                'field' => $name,
+            ]);
         }
+
+        return $this->mustNot('exists', [
+            'field' => $name,
+        ]);
+    }
+
+    /**
+     * Adds a must condition to the query.
+     *
+     * @param string $type       Query type
+     * @param array  $parameters Parameters to the query
+     *
+     * @return $this
+     */
+    public function must(string $type, array $parameters): self
+    {
+        $this->must[] = [
+            $type => $parameters,
+        ];
 
         return $this;
     }
 
     /**
-     * Add a condition to find documents which are some distance away from the
-     * given geo point.
+     * Adds a must_not condition to the query.
      *
-     * @see https://www.elastic.co/guide/en/elasticsearch/reference/2.4/query-dsl-geo-distance-query.html
-     *
-     * @param string|callable $name     A name of the field.
-     * @param mixed           $value    A starting geo point which can be
-     *                                  represented by a string 'lat,lon', an
-     *                                  object like `{'lat': lat, 'lon': lon}`
-     *                                  or an array like `[lon,lat]`.
-     * @param string          $distance A distance from the starting geo point.
-     *                                  It can be for example '20km'.
+     * @param string $type       Query type
+     * @param array  $parameters Parameters to the query
      *
      * @return $this
      */
-    public function distance($name, $value, string $distance): self
+    public function mustNot(string $type, array $parameters): self
     {
-        if (is_callable($name)) {
-            $name($this);
-
-            return $this;
-        }
-
-        $this->filter[] = [
-            'geo_distance' => [
-                $name => $value,
-                'distance' => $distance,
-            ],
+        $this->must_not[] = [
+            $type => $parameters,
         ];
 
         return $this;
@@ -1084,6 +1367,37 @@ trait BuildsFluentQueries
         $this->body = $body;
 
         return $body;
+    }
+
+    private function resolveRegexpFlags(int $flags): ?string
+    {
+        $stringFlags = [];
+
+        if ($flags & Query::REGEXP_FLAG_ALL) {
+            $stringFlags[] = 'ALL';
+        }
+
+        if ($flags & Query::REGEXP_FLAG_COMPLEMENT) {
+            $stringFlags[] = 'COMPLEMENT';
+        }
+
+        if ($flags & Query::REGEXP_FLAG_INTERVAL) {
+            $stringFlags[] = 'INTERVAL';
+        }
+
+        if ($flags & Query::REGEXP_FLAG_INTERSECTION) {
+            $stringFlags[] = 'INTERSECTION';
+        }
+
+        if ($flags & Query::REGEXP_FLAG_ANYSTRING) {
+            $stringFlags[] = 'ANYSTRING';
+        }
+
+        if (empty($stringFlags)) {
+            return null;
+        }
+
+        return implode('|', $stringFlags);
     }
 
     private function flattenArgs(array $args): array
