@@ -528,7 +528,7 @@ trait BuildsFluentQueries
         string $field,
         $value,
         ?float $boost = null
-    ): BuildsFluentQueries {
+    ): self {
         $value = value($value, $this, $field);
 
         if ($boost === null) {
