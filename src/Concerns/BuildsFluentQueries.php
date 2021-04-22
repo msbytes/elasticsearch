@@ -574,10 +574,8 @@ trait BuildsFluentQueries
 
         if (is_string($operator) && $value) {
             return $this->filter('range', [
-                [
-                    $field => [
-                        $operator => value($value, $this, $field),
-                    ],
+                $field => [
+                    $operator => value($value, $this, $field),
                 ],
             ]);
         }
