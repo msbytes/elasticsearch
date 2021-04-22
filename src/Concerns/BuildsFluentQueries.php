@@ -498,6 +498,7 @@ trait BuildsFluentQueries
         }
 
         switch ((string)$operator) {
+            case 'eq':
             case Query::OPERATOR_EQUAL:
                 if ($name === Query::FIELD_ID) {
                     return $this->id((string)$value);
@@ -506,18 +507,22 @@ trait BuildsFluentQueries
                 $this->filter[] = ['term' => [$name => $value]];
                 break;
 
+            case 'gt':
             case Query::OPERATOR_GREATER_THAN:
                 $this->filter[] = ['range' => [$name => ['gt' => $value]]];
                 break;
 
+            case 'gte':
             case Query::OPERATOR_GREATER_THAN_OR_EQUAL:
                 $this->filter[] = ['range' => [$name => ['gte' => $value]]];
                 break;
 
+            case 'lt':
             case Query::OPERATOR_LOWER_THAN:
                 $this->filter[] = ['range' => [$name => ['lt' => $value]]];
                 break;
 
+            case 'lte':
             case Query::OPERATOR_LOWER_THAN_OR_EQUAL:
                 $this->filter[] = ['range' => [$name => ['lte' => $value]]];
                 break;
@@ -578,22 +583,27 @@ trait BuildsFluentQueries
         }
 
         switch ($operator) {
+            case 'eq':
             case Query::OPERATOR_EQUAL:
                 $this->must_not[] = ['term' => [$name => $value]];
                 break;
 
+            case 'gt':
             case Query::OPERATOR_GREATER_THAN:
                 $this->must_not[] = ['range' => [$name => ['gt' => $value]]];
                 break;
 
+            case 'gte':
             case Query::OPERATOR_GREATER_THAN_OR_EQUAL:
                 $this->must_not[] = ['range' => [$name => ['gte' => $value]]];
                 break;
 
+            case 'lt':
             case Query::OPERATOR_LOWER_THAN:
                 $this->must_not[] = ['range' => [$name => ['lt' => $value]]];
                 break;
 
+            case 'lte':
             case Query::OPERATOR_LOWER_THAN_OR_EQUAL:
                 $this->must_not[] = ['range' => [$name => ['lte' => $value]]];
                 break;
