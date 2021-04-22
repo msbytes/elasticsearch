@@ -624,6 +624,24 @@ trait BuildsFluentQueries
     }
 
     /**
+     * Shorthand to add a "wildcard" filter.
+     *
+     * @param string                $field Name of the field to add a filter for
+     * @param string|array|callable $value Filter value. Either a string value,
+     *                                     an array of Elasticsearch parameters,
+     *                                     or a callable that returns either of
+     *                                     the previous.
+     *
+     * @return $this
+     */
+    public function wildcardFilter(string $field, $value): self
+    {
+        return $this->filter('wildcard', [
+            $field => value($value, $this, $field),
+        ]);
+    }
+
+    /**
      * Shorthand to add a "regexp" filter.
      *
      * @param string                $field                 Name of the field to
