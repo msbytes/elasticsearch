@@ -91,6 +91,16 @@ class Query implements Arrayable, JsonSerializable, Jsonable, IteratorAggregate
 
     public const OPERATOR_GREATER_THAN = '>';
 
+    public const REGEXP_FLAG_ALL = 1;
+
+    public const REGEXP_FLAG_COMPLEMENT = 2;
+
+    public const REGEXP_FLAG_INTERVAL = 4;
+
+    public const REGEXP_FLAG_INTERSECTION = 8;
+
+    public const REGEXP_FLAG_ANYSTRING = 16;
+
     public const OPERATOR_GREATER_THAN_OR_EQUAL = '>=';
 
     public const OPERATOR_LIKE = 'like';
