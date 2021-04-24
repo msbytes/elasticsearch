@@ -167,7 +167,7 @@ class Collection extends BaseCollection
      */
     public function toArray(): array
     {
-        return array_map(static function ($item): array {
+        return array_map(static function ($item): mixed {
             return $item instanceof Arrayable
                 ? $item->toArray()
                 : $item;
