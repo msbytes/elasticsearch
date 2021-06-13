@@ -7,11 +7,12 @@ namespace Matchory\Elasticsearch;
 use Elasticsearch\ClientBuilder as ElasticBuilder;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Contracts\Events\Dispatcher;
-use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\Foundation\Application as Laravel;
 use Illuminate\Log\Logger;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use Laravel\Lumen\Application as Lumen;
 use Laravel\Scout\EngineManager;
 use LogicException;
 use Matchory\Elasticsearch\Commands\CreateIndexCommand;
@@ -190,7 +191,14 @@ class ElasticsearchServiceProvider extends ServiceProvider
         // on the container, so we have a single instance at all times
         $this->app->singleton(
             ConnectionResolverInterface::class,
-            function (Application $app) {
+
+            /**
+             * @param Laravel|Lumen $app
+             *
+             * @returns ConnectionInterface
+             * @throws BindingResolutionException
+             */
+            function ($app) {
                 $factory = $app->make(ClientFactoryInterface::class);
 
                 $cache = $app->bound(CacheInterface::class)
@@ -229,7 +237,13 @@ class ElasticsearchServiceProvider extends ServiceProvider
         // Bind the default connection separately
         $this->app->singleton(
             ConnectionInterface::class,
-            function (Application $app) {
+            /**
+             * @param Laravel|Lumen $app
+             *
+             * @returns ConnectionInterface
+             * @throws BindingResolutionException
+             */
+            function ($app) {
                 return $app
                     ->make(ConnectionResolverInterface::class)
                     ->connection();
