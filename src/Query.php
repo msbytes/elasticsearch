@@ -43,6 +43,8 @@ class Query implements Arrayable, JsonSerializable, Jsonable, IteratorAggregate
     use ManagesIndices;
     use ExplainsQueries;
 
+    public const FIELD_AGGS = 'aggs';
+
     public const DEFAULT_CACHE_PREFIX = 'es';
 
     public const DEFAULT_LIMIT = 10;
