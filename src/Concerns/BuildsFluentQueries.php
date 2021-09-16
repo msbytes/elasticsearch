@@ -461,7 +461,7 @@ trait BuildsFluentQueries
         ));
 
         $this->source[Query::SOURCE_INCLUDES] = array_values(array_filter(
-            $this->source[Query::SOURCE_INCLUDES], function ($field) {
+            $this->source[Query::SOURCE_INCLUDES] ?? [], function ($field) {
             return ! in_array(
                 $field,
                 $this->source[Query::SOURCE_EXCLUDES] ?? [],
