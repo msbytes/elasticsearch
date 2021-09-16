@@ -427,16 +427,16 @@ trait BuildsFluentQueries
     {
         $fields = $this->flattenArgs($args);
 
-        $this->source['include'] = array_unique(array_merge(
-            $this->source['include'] ?? [],
+        $this->source[Query::SOURCE_INCLUDES] = array_unique(array_merge(
+            $this->source[Query::SOURCE_INCLUDES] ?? [],
             $fields
         ));
 
-        $this->source['exclude'] = array_values(array_filter(
-            $this->source['exclude'] ?? [], function ($field) {
+        $this->source[Query::SOURCE_EXCLUDES] = array_values(array_filter(
+            $this->source[Query::SOURCE_EXCLUDES] ?? [], function ($field) {
             return ! in_array(
                 $field,
-                $this->source['include'],
+                $this->source[Query::SOURCE_INCLUDES] ?? [],
                 false
             );
         }));
