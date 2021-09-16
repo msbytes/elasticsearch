@@ -162,6 +162,13 @@ trait BuildsFluentQueries
     protected $scrollId = null;
 
     /**
+     * Result aggregations
+     *
+     * @var array
+     */
+    protected $aggregations = [];
+
+    /**
      * Filter operators
      *
      * @var array
@@ -461,6 +468,55 @@ trait BuildsFluentQueries
                 false
             );
         }));
+
+        return $this;
+    }
+
+    /**
+     * Add an aggregation to the query.
+     *
+     * An aggregation summarizes your data as metrics, statistics, or other
+     * analytics. Aggregations help you answer questions like:
+     *  - What’s the average load time for my website?
+     *  - Who are my most valuable customers based on transaction volume?
+     *  - What would be considered a large file on my network?
+     *  - How many products are in each product category?
+     *
+     * Elasticsearch organizes aggregations into three categories:
+     * Metric aggregations that calculate metrics, such as a sum or average,
+     * from field values.
+     * Bucket aggregations that group documents into buckets, also called bins,
+     * based on field values, ranges, or other criteria.
+     * Pipeline aggregations that take input from other aggregations instead of
+     * documents or fields.
+     *
+     * @see https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations.html
+     *
+     * @param string            $name     Name of the aggregation.
+     * @param string|array|null $settings Aggregation configuration. If a string
+     *                                    will be assumed the name of a field to
+     *                                    aggregate. If an array, will be used
+     *                                    as the aggregation configuration. If
+     *                                    omitted, a simple terms aggregation
+     *                                    will be used as a default value, using
+     *                                    the aggregation name as the field.
+     *
+     * @return $this
+     */
+    public function aggregate(
+        string $name,
+        $settings = null
+    ): self {
+        $field = is_string($settings) ? $settings : $name;
+        $settings = is_array($settings)
+            ? $settings
+            : [
+                'terms' => [
+                    'field' => $field,
+                ],
+            ];
+
+        $this->aggregations[$name] = $settings;
 
         return $this;
     }
@@ -1386,6 +1442,17 @@ trait BuildsFluentQueries
             $body[self::FIELD_SORT] = array_unique(
                 array_merge($sortFields, $this->sort),
                 SORT_REGULAR
+            );
+        }
+
+        if (count($this->aggregations)) {
+            $aggregations = array_key_exists(self::FIELD_AGGS, $body)
+                ? $body[self::FIELD_AGGS]
+                : [];
+
+            $body[self::FIELD_AGGS] = array_merge(
+                $aggregations,
+                $this->aggregations
             );
         }
 
