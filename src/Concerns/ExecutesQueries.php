@@ -643,7 +643,7 @@ trait ExecutesQueries
             $metadata,
             true,
             $document[Query::FIELD_INDEX] ?? null,
-            $document[Query::FIELD_TYPE] ?? null,
+            $document[Query::FIELD_TYPE] ?? null
         );
     }
 
