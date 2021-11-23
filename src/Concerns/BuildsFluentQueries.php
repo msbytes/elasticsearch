@@ -1412,21 +1412,21 @@ trait BuildsFluentQueries
         if (count($this->must)) {
             $body[self::FIELD_QUERY]['bool']['must'] = array_merge(
                 $body[self::FIELD_QUERY]['bool']['must'] ?? [],
-                $this->must,
+                $this->must
             );
         }
 
         if (count($this->must_not)) {
             $body[self::FIELD_QUERY]['bool']['must_not'] = array_merge(
                 $body[self::FIELD_QUERY]['bool']['must_not'] ?? [],
-                $this->must_not,
+                $this->must_not
             );
         }
 
         if (count($this->filter)) {
             $body[self::FIELD_QUERY]['bool']['filter'] = array_merge(
                 $body[self::FIELD_QUERY]['bool']['filter'] ?? [],
-                $this->filter,
+                $this->filter
             );
         }
 
