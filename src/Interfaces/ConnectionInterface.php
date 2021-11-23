@@ -33,7 +33,6 @@ interface ConnectionInterface
      *                                type of the connection. Usage of this
      *                                parameter is deprecated.
      *
-     * @return object
      */
     public function insert(
         array $parameters,

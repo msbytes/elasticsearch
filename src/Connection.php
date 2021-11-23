@@ -249,7 +249,7 @@ class Connection implements ConnectionInterface
         array $parameters,
         ?string $index = null,
         ?string $type = null
-    ): object {
+    ) {
         if (
             ! isset($parameters[Query::PARAM_INDEX]) &&
             $index = $index ?? $this->index
