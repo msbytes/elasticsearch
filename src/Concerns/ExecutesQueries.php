@@ -326,7 +326,7 @@ trait ExecutesQueries
             $attributes[self::FIELD_INDEX],
             $attributes[self::FIELD_SCORE],
             $attributes[self::FIELD_TYPE],
-            $attributes[self::FIELD_ID],
+            $attributes[self::FIELD_ID]
         );
 
         $parameters = [
