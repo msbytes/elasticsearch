@@ -124,7 +124,7 @@ class Collection extends BaseCollection
             $scrollId,
             $shards,
             $suggestions,
-            $aggregations,
+            $aggregations
         );
     }
 
